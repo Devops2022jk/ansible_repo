@@ -1,0 +1,42 @@
+#Playbook to deploy application in slave node using docker
+#Auther: Kuben
+#Desig: Technical Lead
+#Version: 1
+#Organisation: KubensLearn
+---
+ - hosts: prd
+   become: yes
+   name: Deploying Website with docker container.
+   tasks:
+    - name: update system package
+      apt: upgrade=yes update_cache=yes
+
+    - name: installing docker 
+      apt: name="docker.io" state=latest
+    
+    - name: starting docker service
+      service: name=docker state=started
+
+    - name: creating docker directory in slave node
+      file: dest="/home/ubuntu/dockerfile" owner=ubuntu group=ubuntu mode="0755" state=directory
+
+    - name: copying docker file to slave node
+      copy: src="/home/ubuntu/dockerfile/dockerfile" dest="/home/ubuntu/dockerfile/dockerfile"
+
+    - name: copying code file to slave node
+      copy: src="/home/ubuntu/dockerfile/index1.html" dest="/home/ubuntu/dockerfile/index1.html" 
+
+    - name: Building docker image from docker file
+      shell: "sudo docker build /home/ubuntu/dockerfile/ -t webapp"
+
+    - name: Running docker container
+      shell: "sudo docker container run -it -d -p 82:80 --name webcont webapp" 
+      
+    - name: Checking docker container status
+      command: "docker ps"
+      register: command_output
+
+    - debug:
+             var: command_output.stdout_line
+...
+
